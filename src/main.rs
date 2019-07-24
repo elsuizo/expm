@@ -48,7 +48,11 @@ pub fn is_square<T: Float>(array: &Array2<T>) -> bool {
     }
 }
 
-pub fn expm<T: Float + Debug + AddAssign + Scalar>(array: &Array2<T>) -> () {
+pub fn compare_floats<T: Float>(num1: T, num2: T) -> bool {
+    Float::abs(num1 - num2) <= Float::epsilon()
+}
+
+pub fn expm<T: Float + PadeAprox + Scalar>(array: &Array2<T>) -> () {
     if is_square(array) {
         // NOTE(elsuizo:2019-07-23): aca iria gebal que es para balancear la matriz y asi sea mas
         // exacto el resultado
@@ -62,17 +66,17 @@ pub fn expm<T: Float + Debug + AddAssign + Scalar>(array: &Array2<T>) -> () {
         let value3 = NumCast::from(0.25).unwrap();
         let value4 = NumCast::from(0.015).unwrap();
         let mut C = Array1::<T>::zeros(10);
-        if Float::abs(norm_array - value1) <= Float::epsilon() {
-            if Float::abs(norm_array - value2) > Float::epsilon() {
-                C = arr1(&[17643225600.,8821612800.,2075673600.,302702400., 30270240., 2162160., 110880., 3960., 90., 1.]);
+        if compare_floats(norm_array, value1) {
+            if compare_floats(norm_array, value2) {
+                C = T::get_vector1();
             } else {
-                if Float::abs(norm_array - value3) > Float::epsilon() {
-                    C = arr1(&[17297280., 8648640., 1995840., 277200., 25200., 1512., 56., 1.]);
+                if compare_floats(norm_array, value3) {
+                    C = T::get_vector2();
                 } else {
-                    if Float::abs(norm_array - value4) > Float::epsilon() {
-                        C = arr1(&[30240., 15120., 3360., 420., 30., 1.]);
+                    if compare_floats(norm_array, value4) {
+                        C = T::get_vector3();
                     } else {
-                        C = arr1(&[120., 60., 12., 1.]);
+                        C = T::get_vector4();
                     }
                 }
             }
@@ -108,6 +112,7 @@ fn main() {
                                     [1.0, 1.0, 1.0]]);
     let inf_n = inf_norm(&a);
     let norm = opnorm1(&b);
+    let v = vec![1, 1, 1];
     let n = OperationNorm::opnorm_one(&a);
     // NOTE(elsuizo:2019-07-23): Vec of Nones
     let a_clone = a.clone();
