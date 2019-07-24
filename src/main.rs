@@ -39,7 +39,7 @@ pub fn opnorm1<T: Float + AddAssign>(array: &Array2<T>) -> T {
     return nrm;
 }
 
-pub fn is_square<T: Float>(array: &Array2<T>) -> bool {
+pub fn is_square(array: &Array2<f64>) -> bool {
     let shape = array.shape();
     if shape[0] == shape[1] {
         return true;
@@ -48,11 +48,12 @@ pub fn is_square<T: Float>(array: &Array2<T>) -> bool {
     }
 }
 
-pub fn compare_floats<T: Float>(num1: T, num2: T) -> bool {
-    Float::abs(num1 - num2) <= Float::epsilon()
+pub fn compare_floats(num1: f64, num2: f64) -> bool {
+    f64::abs(num1 - num2) <= f64::epsilon()
 }
 
-pub fn expm<T: Float + PadeAprox + Scalar>(array: &Array2<T>) -> () {
+
+pub fn expm(array: &Array2<f64>) -> () {
     if is_square(array) {
         // NOTE(elsuizo:2019-07-23): aca iria gebal que es para balancear la matriz y asi sea mas
         // exacto el resultado
@@ -60,39 +61,47 @@ pub fn expm<T: Float + PadeAprox + Scalar>(array: &Array2<T>) -> () {
         let n = array.shape()[0];
 
         let norm_array = OperationNorm::opnorm_one(array).unwrap();
-        let I: Array2<T> = identity(n);
-        let value1 = NumCast::from(2.1).unwrap();
-        let value2 = NumCast::from(0.95).unwrap();
-        let value3 = NumCast::from(0.25).unwrap();
-        let value4 = NumCast::from(0.015).unwrap();
-        let mut C = Array1::<T>::zeros(10);
-        if compare_floats(norm_array, value1) {
-            if compare_floats(norm_array, value2) {
-                C = T::get_vector1();
+        let I: Array2<f64> = identity(n);
+        let mut C = Array1::<f64>::zeros(10);
+        if compare_floats(norm_array, 2.1) {
+            if compare_floats(norm_array, 0.95) {
+                C = arr1(&[17643225600.0, 8821612800.0, 2075673600.0, 302702400.0, 30270240.0, 2162160.0, 110880.0, 3960.0, 90.0, 1.0]);
             } else {
-                if compare_floats(norm_array, value3) {
-                    C = T::get_vector2();
+                if compare_floats(norm_array, 0.25) {
+                    C = arr1(&[17297280.0, 8648640.0, 1995840.0, 277200., 25200.0, 1512.0, 56.0, 1.0]);
                 } else {
-                    if compare_floats(norm_array, value4) {
-                        C = T::get_vector3();
+                    if compare_floats(norm_array, 0.015) {
+                        C = arr1(&[30240.0, 15120.0, 3360.0, 420.0, 30.0, 1.0]);
                     } else {
-                        C = T::get_vector4();
+                        C = arr1(&[120.0, 60.0, 12.0, 1.0]);
                     }
                 }
             }
         }
         let array_square = array.dot(array);
-        let P = I.clone();
+        let mut P = I.clone();
+        let mut U = C[1] * &P;
+        let mut V = C[0] * &P;
+
+        println!("C.len(): {:}", (C.len() % 2));
+        for k in 0..(C.len() % 2) {
+            let k2 = 2 * k;
+            P = P.dot(&array_square);
+            U = U + (C[k2 + 2] * &P);
+            V = V + (C[k2 + 1] * &P);
+        }
+        U = array.dot(&U);
+        let X = V + U;
+        // let solution = (V - U).solve_into(X).unwrap();
     }
 }
 
-pub fn identity<T: Float>(n: usize) -> Array2<T> {
-    let one = T::one();
-    let mut result = Array2::<T>::zeros((n, n));
+pub fn identity(n: usize) -> Array2<f64> {
+    let mut result = Array2::<f64>::zeros((n, n));
     for i in 0..n {
         for j in 0..n {
             if i == j {
-                result[[i, j]] = one;
+                result[[i, j]] = 1.0;
             }
         }
     }
@@ -103,19 +112,20 @@ pub fn identity<T: Float>(n: usize) -> Array2<T> {
 fn main() {
 
     // NOTE(elsuizo:2019-07-23): para estos dos arrays el resultado es el mismo que en Julia
-    let mut a: Array2<f32> = arr2(&[[1.0, 2.0, 3.0],
+    let mut a: Array2<f64> = arr2(&[[1.0, 2.0, 3.0],
                                     [4.0, 5.0, 6.0],
                                     [7.0, 8.0, 9.0]]);
 
-    let mut b: Array2<f32> = arr2(&[[-1.0, 1.0, 1.0],
+    let mut b: Array2<f64> = arr2(&[[-1.0, 1.0, 1.0],
                                     [1.0, 1.0, 1.0],
                                     [1.0, 1.0, 1.0]]);
     let inf_n = inf_norm(&a);
     let norm = opnorm1(&b);
-    let v = vec![1, 1, 1];
     let n = OperationNorm::opnorm_one(&a);
+    let v = arr1(&[1.0, 1.0, 1.0]);
     // NOTE(elsuizo:2019-07-23): Vec of Nones
     let a_clone = a.clone();
-    println!("norm: {:?}", a_clone);
-    // expm(&a);
+    println!("norm: {:?}", n);
+    println!("len of v: {:}", v.len());
+    expm(&a);
 }
