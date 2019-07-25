@@ -83,16 +83,16 @@ pub fn expm(array: &Array2<f64>) -> () {
         let mut U = C[1] * &P;
         let mut V = C[0] * &P;
 
-        println!("C.len(): {:}", (C.len() % 2));
-        for k in 0..(C.len() % 2) {
+        for k in 0..(C.len() / 2) - 1 {
             let k2 = 2 * k;
             P = P.dot(&array_square);
             U = U + (C[k2 + 2] * &P);
             V = V + (C[k2 + 1] * &P);
+            println!("U{:}", U);
         }
         U = array.dot(&U);
         let X = V + U;
-        // let solution = (V - U).solve_into(X).unwrap();
+        let solution = (V - U).solve_into(X).unwrap();
     }
 }
 
